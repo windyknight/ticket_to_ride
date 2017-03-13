@@ -6,11 +6,13 @@ players (+ownership)
     can have their own adjlists
 """
 class Track:
-    def __init__(self): #to be upd8ed
-        self.owner = []
-        self.maxOwners = None
-        self.color = None
-        self.length = 0
+    lenToPts = [0,1,2,4,7,10,15]
+    def __init__(self, isDouble, color, length): #to be upd8ed
+        self.owners = []
+        self.isDouble = isDouble
+        self.color = color
+        self.length = length
+        self.pts = lenToPts[self.length]
 
     def full(self):
         return len(self.owner) == self.maxOwners
@@ -52,6 +54,8 @@ class CardSet:
             return self.cards[color] + self.cards[self.trans['w']] >= num
 
 class Game:
+    #don't know what Jay's gonna do with the destinations tbh, like will you make a class like track or meh?
+    #i'll just leave it here
     allDestinations = [((0,4),20), ((0,23),13), ((1,16),7), ((1,22),13), ((2,25),11), ((2,31),12),
                        ((3,24),9), ((3,26),8), ((4,32),13), ((4,33),9), ((5,14),22), ((5,20),9),
                        ((6,20),8), ((7,29),10), ((7,31),8), ((8,35),10), ((9,35),12), ((10,22),11),
@@ -61,3 +65,27 @@ class Game:
         self.numPlayers = numPlayers
         self.players = players
         self.willEnd = False
+        self.destinations = allDestinations
+        self.faceDownDeck = CardSet(12, 12, 12, 12, 12, 12, 12, 12, 14)
+        self.openFaceDeck = []
+        self.currentPlayer = 0
+        self.actionTaken = False
+        self.trainGraph = TrainGraph()
+        
+class Player:
+    def  __init__(self, index, name = "doodoo head", numTrains = 45):
+        self.name = name
+        self.score = 0
+        self.index = index
+        self.cardSet = cardSet()
+        self.destinations = []
+        self.numTrains = numTrains
+        self.ownedTracks = []
+    
+    def claimTrack(track):
+        if not track.full():
+            ownedTracks.append(track)
+            score.add(track.pts)
+            
+    def addCards(cs):
+        self.cardSet += cs #DO OVERRIDING
