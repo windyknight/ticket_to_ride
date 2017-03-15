@@ -13,21 +13,18 @@ ee = trains.edges
 no = trains.nodes
 de = dest.dests
 
-def pathinator(self, source, adj):
-    dist = [-1 for i in adj]
-    stek = []
-    stek.append(source)
-    dist[source] = 0
-    while len(stek) > 0:
-        v = stek.pop(0)
-        for i in adj[v]:
-            if dist[i] == -1:
-                stek.append(i)
-            dist[i] = max(dist[i], dist[v] + adj[v][i][1])
+def pathinator(self, curr, adj, mask):
     ans = 0
-    for i in dist:
-        ans = max(ans, i)
+    for i in range(len(adj[curr])):
+        v = i[0]
+        w = i[1]
+        if bitmask[i] & (1 << v):
+            bitmask = [x for x in mask]
+            bitmask[i] &= ~(1 << v)
+            bitmask[v] &= ~(1 << i)
+            ans = max(ans, wt + pathinator(v, adj, bitmask))
     return ans
+
 
 class UnionFind: #optimized with rank heuristics
 	def __init__(self, size):
@@ -44,7 +41,7 @@ class UnionFind: #optimized with rank heuristics
 		return self.find(x) == self.find(y)
 
 	def unify(self, x, y):
-		if not self.check(x, y):
+		if not self.same(x, y):
 			a = self.find(x)
 			b = self.find(y)
 			if self.rank[a] <= self.rank[b]:
@@ -162,7 +159,7 @@ class Player:
     def pather(self):
         ans = -1
         for i in range(36):
-            ans = max(ans, pathinator(i))
+            ans = max(ans, pathinator(i, self.adj, [(1 << len(j)) for j in range(self.adj)]))
         return ans
 
     def procGoals(self):
