@@ -25,32 +25,6 @@ def pathinator(self, curr, adj, mask):
             ans = max(ans, wt + pathinator(v, adj, bitmask))
     return ans
 
-
-class UnionFind: #optimized with rank heuristics
-	def __init__(self, size):
-		self.parents = [i for i in range(size)]
-        self.rank [0 for i in range(size)]
-
-	def find(self, n):
-		if self.parents[n] is -1:
-			return n
-		else:
-			return self.find(self.parents[n])
-
-	def same(self, x, y):
-		return self.find(x) == self.find(y)
-
-	def unify(self, x, y):
-		if not self.same(x, y):
-			a = self.find(x)
-			b = self.find(y)
-			if self.rank[a] <= self.rank[b]:
-				self.parents[a] = b
-				if self.rank[a] == self.rank[b]:
-					self.rank[b] += 1
-			else:
-				self.parents[b] = a
-
 class CardSet:
     def __init__(self, red=0, blue=0, green=0, black=0, orange=0, yellow=0, pink=0, wild=0): # i don't remember all the colors
         self.cards = [red, blue, green, black, orange, yellow, pink, wild]
@@ -93,7 +67,7 @@ class Deck:
             self.addToDisp()
 
     def blindDraw(self):
-        return randint(0,8)
+        return randint(0,7)
 
     def drawDisp(self, nums):
         if self.up[nums[0]] == 8 or (len(nums) == 2 and self.up[nums[1]] == 8):
@@ -114,7 +88,6 @@ class Player:
         self.adj = [[] for i in range(36)]
         self.trans = {'r':0, 'blu':1, 'g':2, 'bla':3, 'o':4, 'y':5, 'p':6, 'whi': 7, 'wil':8}
         self.equivalence = [0, 1, 2, 4, 7, 10, 15]
-        self.conn = UnionFind(36)
 
     def doubleDestinyDraw(self, deck):
         self.hand.addCard(1, deck.blindDraw())
@@ -146,12 +119,11 @@ class Player:
             if rem > 0:
                 self.hand.addCard(-rem, 'wil')
             if j not in self.adj[i]:
-                self.adj[i].append((j, w))
+                self.adj[i].append((j,w))
             if i not in self.adj[j]:
                 self.adj[j].append((i,w))
             self.trains -= w
             self.score += self.equivalence[w]
-            self.conn.unify(i, j)
 
     def getGoal(self, goal):
         self.goals.append(goal)
@@ -169,10 +141,27 @@ class Player:
             else:
                 self.score -= i[2]
 
+    def printStatus(self):
+        print(self.name + "'s network:")
+        for i in range(36):
+            if len(self.adj[i]) > 0:
+                line = [no[i] + ":"]
+                for j in self.adj[i]:
+                    line.append(no[j])
+                print(" ".join(line))
+        print()
+        print("Destination cards:")
+        line = [[no[i[0]],no[i[1]],str(i[2])] for i in self.goals]
+        for i in line:
+            print(" ".join(i))
+        print()
+        print("Score: " + str(self.score))
+        print("Trains: " + str(self.trains))
+
 class Game:
     def __init__(self, numPlayers):
         self.numPlayers = numPlayers
-        self.players = [Player(input("Player " + (i+1) + " name: ")) for i in range(self.numPlayers)]
+        self.players = [Player(input("Player " + str(i+1) + " name: ")) for i in range(self.numPlayers)]
         self.inPlay = True
         self.goals = [i for i in de]
         shuffle(self.goals)
@@ -185,13 +174,14 @@ class Game:
 
         for i in self.players:
             for j in range(2):
-                i.doubleDestinyDraw(self.deck())
-            for j in range(3):
-                self.dealGoal(i)
+                i.doubleDestinyDraw(self.deck)
+            self.dealGoal(i)
 
     def processTurn(self):
         p = self.players[self.curr]
-        while not self.actionTaken:
+        while True:
+            p.printStatus()
+            print()
             print("Actions:")
             print("[1] Draw cards.")
             print("[2] Buy a track.")
@@ -260,15 +250,17 @@ class Game:
                     self.tracks[idx][1] = 1
                     p.claimTrack(trek[0])
                 break
-            else:
+            elif com == 3:
                 break
-            self.curr += 1
-            self.curr %= self.numPlayers
-            if self.endgame and self.endat == self.curr:
-                self.endGame()
-            if p.trains < 3:
-                self.endgame = True
-                self.endat = self.curr
+        #print(self.curr)
+        self.curr += 1
+        self.curr %= self.numPlayers
+        #print(self.curr)
+        if self.endgame and self.endat == self.curr:
+            self.endGame()
+        if p.trains < 3:
+            self.endgame = True
+            self.endat = self.curr
 
     def endGame(self): #fuck this
         for i in self.players:
@@ -293,8 +285,13 @@ class Game:
     def dealGoal(self, player):
         thing = [self.goals.pop() for i in range(3)]
         p = player
+        print(p.name)
         while True:
-            nums = list(set(map(int, input("Indices of cards to keep?").split())))
+            line = [[no[i[0]],no[i[1]],str(i[2])] for i in thing]
+            for i in line:
+                print(" ".join(i))
+            nums = list(set(map(int, input("Indices of cards to keep? ").split())))
+            #print(len(nums))
             if len(nums) == 0:
                 continue
             try:
@@ -303,6 +300,15 @@ class Game:
                 for i in range(3):
                     if i not in nums:
                         self.goals.append(thing[i])
+                if len(nums) != 0:
+                    break
             except:
                 continue
             break
+
+
+num = int(input("Number of players? "))
+num = min(2, num)
+game = Game(num)
+while game.inPlay:
+    game.processTurn()
