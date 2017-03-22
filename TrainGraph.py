@@ -1,6 +1,9 @@
 from enum import Enum
 
 class Edge:
+    """
+    Defines an edge, or a track.
+    """
     def __init__(self, node1, node2, weight, color):
         self.node1 = node1;
         self.node2 = node2;
@@ -20,6 +23,10 @@ nodes = {0: "Vancouver", 1: "Calgary", 2: "Winnipeg", 3 : "Sault St. Marie", 4: 
          29: "El Paso", 30: "Dallas", 31: "Houston", 32: "New Orleans", 33: "Atlanta", 34: "Charleston",
          35: "Miami"}
 
+
+"""
+Defines all tracks.
+"""
 #Node 1 is always less than Node 2
 #Edges of Vancouver
 A = [Edge(0, 5, 1, None), 0]
@@ -39,7 +46,7 @@ I = [Edge(2, 3, 6, None), 0]
 #Edges of Sault St. Marie
 J = [Edge(3, 7, 3, None), 0]
 K = [Edge(3, 8, 2, None), 0]
-L = [Edge(3, 4, 5, "blah"), 0]
+L = [Edge(3, 4, 5, "bla"), 0]
 
 #Edges of Montreal
 M = [Edge(4, 8, 3, None), 0]

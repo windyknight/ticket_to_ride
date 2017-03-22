@@ -1,10 +1,3 @@
-"""
-classes:
-graph thing (adj list)
-tickets
-players (+ownership)
-    can have their own adjlists
-"""
 from random import *
 import TrainGraph as trains
 import DestinationCards as dest
@@ -14,6 +7,9 @@ no = trains.nodes
 de = dest.dests
 
 def pathinator(self, curr, adj, mask):
+    """
+    Gets the longest path from some node given an adjacency matrix and a bitmask.
+    """
     ans = 0
     for i in range(len(adj[curr])):
         v = i[0]
@@ -25,12 +21,62 @@ def pathinator(self, curr, adj, mask):
             ans = max(ans, wt + pathinator(v, adj, bitmask))
     return ans
 
+class UnionFind:
+    """
+    Used to easily check connectivity.
+    """
+    def __init__(self, n):
+        """
+        Initializes the UnionFind class given n.
+        """
+        self.p = [i for i in range(n)]
+        self.r = [0 for i in range(n)]
+
+    def find(self, i):
+        """
+        Finds the representative of the given node.
+        """
+        if self.p[i] == i:
+            return i
+        else:
+            self.p[i] = self.find(self.p[i])
+            return self.p[i]
+
+    def same(self, i, j):
+        """
+        Checks if two nodes are connected by checking if they have the same reps.
+        """
+        return self.find(i) == self.find(j)
+
+    def unify(self, i, j):
+        """
+        Joins two nodes and their groups together.
+        """
+        if not self.same(i,j):
+            x = self.find(i)
+            y = self.find(j)
+            if self.r[x] >= self.r[y]:
+                self.p[y] = x
+                if self.r[x] == self.r[y]:
+                    self.r[x] += 1
+            else:
+                self.p[x] += 1
+
 class CardSet:
+    """
+    Represents a set of cards per color used in buying tracks.
+    """
     def __init__(self, red=0, blue=0, green=0, black=0, orange=0, yellow=0, pink=0, wild=0): # i don't remember all the colors
+        """
+        Initializes CardSet considering the number of cards per color.
+        """
         self.cards = [red, blue, green, black, orange, yellow, pink, wild]
         self.trans = {'r':0, 'blu':1, 'g':2, 'bla':3, 'o':4, 'y':5, 'p':6, 'w':7}
 
     def addCard(self, num, color):
+        """
+        Adds a certain number of cards of a certain color to the CardSet.
+        """
         if isinstance(color, str):
             self.cards[self.trans[color]] += num
         else:
@@ -38,7 +84,7 @@ class CardSet:
 
     def canBuy(self, num, color):
         """
-        Can you buy a thing given cost?
+        Returns a boolean value representing whether or not tracks can be afforded considering the CardSet at hand.
         """
         if color is None:
             for i in self.cards:
@@ -49,27 +95,48 @@ class CardSet:
             return self.cards[color] + self.cards[self.trans['w']] >= num
 
 class Deck:
+    """
+    Represents the game's deck of colored cards.
+    """
     def __init__(self):
+        """
+        Initializes the class Deck.
+        """
         self.up = []
         self.trans = {'r':0, 'blu':1, 'g':2, 'bla':3, 'o':4, 'y':5, 'p':6, 'whi': 7, 'wil':8}
         for i in range(4):
             self.addToDisp()
 
     def canAdd(self):
+        """
+        Determines whether there are empty slots in the face-up part or not.
+        """
         return len(self.up) < 4
 
     def addToDisp(self):
+        """
+        Draws from the deck into the face-up pile.
+        """
         if self.canAdd():
             self.up.append(self.blindDraw())
 
     def fill(self):
+        """
+        Fills face-up pile with cards.
+        """
         while self.canAdd():
             self.addToDisp()
 
     def blindDraw(self):
+        """
+        Draws a random card from the deck, assuming the deck is infinite.
+        """
         return randint(0,7)
 
     def drawDisp(self, nums):
+        """
+        Draws cards from the display.
+        """
         if self.up[nums[0]] == 8 or (len(nums) == 2 and self.up[nums[1]] == 8):
             nums.pop()
         ans = []
@@ -80,33 +147,52 @@ class Deck:
 
 class Player:
     def __init__(self, name):
+        """
+        Initializes Player class, given a name.
+        """
         self.name = name
         self.score = 0
         self.hand = CardSet()
         self.goals = []
         self.trains = 45
+        self.conn = UnionFind(36)
         self.adj = [[] for i in range(36)]
         self.trans = {'r':0, 'blu':1, 'g':2, 'bla':3, 'o':4, 'y':5, 'p':6, 'whi': 7, 'wil':8}
         self.equivalence = [0, 1, 2, 4, 7, 10, 15]
 
     def doubleDestinyDraw(self, deck):
+        """
+        Draws 2 blind cards.
+        """
         self.hand.addCard(1, deck.blindDraw())
         self.hand.addCard(1, deck.blindDraw())
 
     def doubleDisplay(self, deck, draws):
+        """
+        Draws 2 display cards.
+        """
         res = deck.drawDisp(draws)
         for i in res:
             self.hand.addCard(1, i)
 
     def dispBlind(self, deck, draw):
+        """
+        Draws one from display and one blindly.
+        """
         self.hand.addCard(1, deck.drawDisp(draw)[0])
         self.hand.addCard(1, deck.blindDraw())
 
     def wildDisp(self, deck, draw):
+        """
+        Draws a wild card from the display.
+        """
         deck.drawDisp(draw)
         self.hand.addCard(1, 'w')
 
     def claimTrack(self, track):
+        """
+        Buys a track, if it can be afforded. Also adds it to the player's adjacency list.
+        """
         i = self.track.node1
         j = self.track.node2
         w = self.track.weight
@@ -124,17 +210,27 @@ class Player:
                 self.adj[j].append((i,w))
             self.trains -= w
             self.score += self.equivalence[w]
+            self.conn.unify(i,j)
 
     def getGoal(self, goal):
+        """
+        Adds a goal card.
+        """
         self.goals.append(goal)
 
     def pather(self):
+        """
+        Gets the longest path from any of the nodes.
+        """
         ans = -1
         for i in range(36):
             ans = max(ans, pathinator(i, self.adj, [(1 << len(j)) for j in range(self.adj)]))
         return ans
 
     def procGoals(self):
+        """
+        Modifies the score based on whether you achieve your goals or not.
+        """
         for i in self.goals:
             if self.conn.same(i[0], i[1]):
                 self.score += i[2]
@@ -142,6 +238,9 @@ class Player:
                 self.score -= i[2]
 
     def printStatus(self):
+        """
+        Prints player stats for debugging.
+        """
         print(self.name + "'s network:")
         for i in range(36):
             if len(self.adj[i]) > 0:
@@ -160,6 +259,9 @@ class Player:
 
 class Game:
     def __init__(self, numPlayers):
+        """
+        Initializes Game class, given the number of players.
+        """
         self.numPlayers = numPlayers
         self.players = [Player(input("Player " + str(i+1) + " name: ")) for i in range(self.numPlayers)]
         self.inPlay = True
@@ -178,6 +280,9 @@ class Game:
             self.dealGoal(i)
 
     def processTurn(self):
+        """
+        Turn progression goes on here. Main function for the game.
+        """
         p = self.players[self.curr]
         while True:
             p.printStatus()
@@ -263,6 +368,9 @@ class Game:
             self.endat = self.curr
 
     def endGame(self): #fuck this
+        """
+        Endgame processing here.
+        """
         for i in self.players:
             i.procGoals()
         idx = 0
@@ -283,6 +391,9 @@ class Game:
         self.inPlay = False
 
     def dealGoal(self, player):
+        """
+        Initial doling out of goal cards.
+        """
         thing = [self.goals.pop() for i in range(3)]
         p = player
         print(p.name)

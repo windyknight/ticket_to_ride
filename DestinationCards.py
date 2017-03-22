@@ -25,6 +25,9 @@ nodes = {0: "Vancouver", 1: "Calgary", 2: "Winnipeg", 3 : "Sault St. Marie", 4: 
          29: "El Paso", 30: "Dallas", 31: "Houston", 32: "New Orleans", 33: "Atlanta", 34: "Charleston",
          35: "Miami"}
 class DestinationCards(Enum):
+    """
+    Defines all destination cards, aka goals.
+    """
     # (node1, node2, points)
     D1 = (17, 29, 4)
     D2 = (18, 31, 5)
